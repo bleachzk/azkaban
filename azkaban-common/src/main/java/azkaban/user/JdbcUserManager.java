@@ -58,18 +58,16 @@ public class JdbcUserManager implements UserManager {
         HashMap<String, User> users = new HashMap<String, User>();
         HashMap<String, String> userPassword = new HashMap<String, String>();
         HashMap<String, Role> roles = new HashMap<String, Role>();
-        HashMap<String, Set<String>> groupRoles =
-                new HashMap<String, Set<String>>();
-        HashMap<String, Set<String>> proxyUserMap =
-                new HashMap<String, Set<String>>();
+        HashMap<String, Set<String>> groupRoles =  new HashMap<String, Set<String>>();
+        HashMap<String, Set<String>> proxyUserMap = new HashMap<String, Set<String>>();
 
-        List<User> userList = null;
-        List<Role> roleList = null;
-        List<Group> groupList = null;
-        List<UserRole> userRoleList = null;
-        List<UserGroup> userGroupList = null;
-        List<UserProxy> userProxyList = null;
-        List<GroupRole> groupRoleList = null;
+        List<User> userList;
+        List<Role> roleList;
+        List<Group> groupList;
+        List<UserRole> userRoleList;
+        List<UserGroup> userGroupList;
+        List<UserProxy> userProxyList;
+        List<GroupRole> groupRoleList;
         try {
             userList = userInfoLoader.fetchAllUser();
         } catch (UserManagerException e) {
@@ -118,7 +116,8 @@ public class JdbcUserManager implements UserManager {
             this.proxyUserMap = proxyUserMap;
             this.groupRoles = groupRoles;
         }
-        logger.error(" initData method ,users.seize=" + users.size() + ",userPassword.seize=" + userPassword.size() + ",roles.seize=" + roles.size() + ",proxyUserMap.seize=" + proxyUserMap.size() + ",groupRoles.seize=" + groupRoles.size());
+        logger.error(" initData method ,users.seize=" + users.size() + ",userPassword.seize=" + userPassword.size() + ",roles.seize=" + roles.size
+                () + ",proxyUserMap.seize=" + proxyUserMap.size() + ",groupRoles.seize=" + groupRoles.size());
     }
 
     /**
@@ -130,28 +129,26 @@ public class JdbcUserManager implements UserManager {
      */
     public void loadUserData(List<User> userList, List<UserRole> userRoleList, List<UserGroup> userGroupList, List<UserProxy> userProxyList,
                              HashMap<String, User> users, HashMap<String, String> userPassword, HashMap<String, Set<String>> proxyUserMap) {
-        if (userList == null) {
+        if (userList == null || userList.size() == 0) {
             throw new RuntimeException("Error loading user. The userList is null.");
         }
-        User user = null;
-        for (User userObj : userList) {
-            user = userObj;
+        for (User user : userList) {
             userPassword.put(user.getUserId(), user.getPassword());//密码
-            if (userRoleList != null) {
+            if (userRoleList != null && userRoleList.size() > 0) {
                 for (UserRole userRole : userRoleList) {
                     if (user.getUserId().equals(userRole.getUserName())) {
                         user.addRole(userRole.getRoleName());//用户-角色
                     }
                 }
             }
-            if (userGroupList != null) {
+            if (userGroupList != null && userGroupList.size() > 0) {
                 for (UserGroup userGroup : userGroupList) {
                     if (user.getUserId().equals(userGroup.getUserName())) {
                         user.addGroup(userGroup.getGroupName());//用户-组
                     }
                 }
             }
-            if (userProxyList != null) {
+            if (userProxyList != null && userProxyList.size() > 0) {
                 for (UserProxy userProxy : userProxyList) {
                     if (user.getUserId().equals(userProxy.getUserName())) {
                         Set<String> proxySet = proxyUserMap.get(user.getUserId());
@@ -173,7 +170,7 @@ public class JdbcUserManager implements UserManager {
      * @param roles
      */
     public void loadRoleData(List<Role> roleList, HashMap<String, Role> roles) {
-        if (roleList == null) {
+        if (roleList == null || roleList.size() < 1) {
             throw new RuntimeException("Error loading role. The roleList is null.");
         }
         for (Role role : roleList) {
@@ -188,7 +185,7 @@ public class JdbcUserManager implements UserManager {
      * @param groupRoles
      */
     public void loadGroupData(List<Group> groupList, List<GroupRole> groupRoleList, HashMap<String, Set<String>> groupRoles) {
-        if (groupRoleList == null) {
+        if (groupRoleList == null || groupRoleList.size() < 1) {
             throw new RuntimeException("Error loading groupRole. The groupRoleList is null.");
         }
 
@@ -210,61 +207,7 @@ public class JdbcUserManager implements UserManager {
     @Override
     public User getUser(String username, String password) throws UserManagerException {
         return UserUtils.getInstance().getUser(groupRoles, users, userPassword, username, password);
-//        if (username == null || username.trim().isEmpty()) {
-//            throw new UserManagerException("Username is empty.");
-//        } else if (password == null || password.trim().isEmpty()) {
-//            throw new UserManagerException("Password is empty.");
-//        }
-//
-//        // Minimize the synchronization of the get. Shouldn't matter if it
-//        // doesn't exist.
-//        String foundPassword = null;
-//        User user = null;
-//        synchronized (this) {
-//            foundPassword = userPassword.get(username);
-//            if (foundPassword != null) {
-//                user = users.get(username);
-//            }
-//        }
-//
-//        if (foundPassword == null || !foundPassword.equals(password)) {
-//            throw new UserManagerException("Username/Password not found.");
-//        }
-//        // Once it gets to this point, no exception has been thrown. User
-//        // shoudn't be
-//        // null, but adding this check for if user and user/password hash tables
-//        // go
-//        // out of sync.
-//        if (user == null) {
-//            throw new UserManagerException("Internal error: User not found.");
-//        }
-//
-//        // Add all the roles the group has to the user
-//        resolveGroupRoles(user);
-//        user.setPermissions(new User.UserPermissions() {
-//            @Override
-//            public boolean hasPermission(String permission) {
-//                return true;
-//            }
-//
-//            @Override
-//            public void addPermission(String permission) {
-//            }
-//        });
-//        return user;
     }
-
-//    private void resolveGroupRoles(User user) {
-//        UserUtils.getInstance().resolveGroupRoles(groupRoles, user);
-//        for (String group : user.getGroups()) {
-//            Set<String> groupRoleSet = groupRoles.get(group);
-//            if (groupRoleSet != null) {
-//                for (String role : groupRoleSet) {
-//                    user.addRole(role);
-//                }
-//            }
-//        }
-//    }
 
     @Override
     public boolean validateUser(String username) {
