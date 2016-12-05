@@ -23,10 +23,10 @@ public class ElectLeader implements Watcher {
     private static final String AZKABAN_ZOOKEEPER_SESSION_TIMEOUT = "azkaban.zookeeper.session.timeout";
     private static final String AZKABAN_IS_MASTER_NODE = "azkaban.is.master.node";
     private static int session_timeout = 5000;
-    private static String connection_address = "192.168.10.84:2181";
+    private static String connection_address = "localhost:2181";
     private static String znode_name = "/azkaban";
     private ZooKeeper zk;
-    private static String serverId = "192.168.10.85";
+    private static String serverId = "localhost";
     private volatile boolean connected = false;
     private volatile boolean expired = false;
     enum MasterStates {RUNNING, ELECTED, NOTELECTED}
@@ -112,7 +112,7 @@ public class ElectLeader implements Watcher {
                     logger.error("Something went wrong when running for master.",
                             KeeperException.create(KeeperException.Code.get(rc), path));
             }
-            logger.info("I'm " + (state == MasterStates.ELECTED ? "" : "not ") + "the leader " + serverId);
+            logger.error("I'm " + (state == MasterStates.ELECTED ? "" : "not ") + "the leader " + serverId);
         }
     };
 

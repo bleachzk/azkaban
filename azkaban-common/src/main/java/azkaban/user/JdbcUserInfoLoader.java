@@ -51,7 +51,7 @@ public class JdbcUserInfoLoader extends AbstractJdbcLoader implements UserInfoLo
     private static class FetchAllUserResultHandle implements
             ResultSetHandler<List<User>> {
         private static String SELECT_ALL_USER =
-                "select username,password_md5,email from user_info";
+                "select username,password,email from user_info";
 
         @Override
         public List<User> handle(ResultSet rs) throws SQLException {
