@@ -386,7 +386,7 @@ azkaban.SummaryView = Backbone.View.extend({
     var data = {
       projectName: projectName,
       flowName: flowId,
-          jobTypes: this.model.get('jobTypes'),
+      jobTypes: this.model.get('jobTypes'),
       schedule: this.model.get('schedule'),
     };
     dust.render("flowsummary", data, function(err, out) {
@@ -463,13 +463,15 @@ $(function() {
 
   var requestURL = contextURL + "/manager";
   // Set up the Flow options view. Create a new one every time :p
-  $('#executebtn').click(function() {
+  $('#executebtn').click(function(e) {
     var data = graphModel.get("data");
     var nodes = data.nodes;
+    var clusterGroup=$(e.target).attr("clusterGroup");
     var executingData = {
       project: projectName,
       ajax: "executeFlow",
-      flow: flowId
+      flow: flowId,
+      clusterGroup:clusterGroup
     };
 
     flowExecuteDialogView.show(executingData);
