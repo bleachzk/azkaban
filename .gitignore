@@ -16,3 +16,4 @@ azkaban-webserver/build/*
 build/*
 
 *.iml
+azkaban-test/build/*
