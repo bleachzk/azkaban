@@ -97,16 +97,15 @@ public class SessionCodis {
         String username = jedis.hget(sessionId, "username");
         String password = jedis.hget(sessionId, "password");
         String ip = jedis.hget(sessionId, "ip");
-        logger.info(" getSession method ,sessionId= " + sessionId + ",username=" + username + ",ip=" + ip);
         if (StringUtils.isBlank(sessionId) || StringUtils.isBlank(password) || StringUtils.isBlank(ip)) {
-            logger.error(" getSession method , param  error,sessionId="+sessionId+",password="+password+",ip"+ip);
+            logger.error(" getSession method , param  error,sessionId=" + sessionId + ",password=" + password + ",ip" + ip);
             return null;
         }
         Session session = null;
         try {
             session = createSession(sessionId, username, password, ip);
         } catch (Exception e) {
-            logger.error(" getSession method , get session object error",e);
+            logger.error(" getSession method , get session object error", e);
         }
         jedis.close();
         return session;
