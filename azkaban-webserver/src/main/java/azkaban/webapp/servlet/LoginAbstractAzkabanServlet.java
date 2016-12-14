@@ -227,6 +227,8 @@ public abstract class LoginAbstractAzkabanServlet extends
         Session session = getApplication().getSessionCodis().getSession(sessionId);
         // Check if the IP's are equal. If not, we invalidate the sesson.
         if (session == null || !remoteIp.equals(session.getIp())) {
+            logger.error("session is null or the IP is not the auth logined IP, session:" + session + "requestIp:" + remoteIp + "authSessionIp:" +
+                    session == null ? "" : session.getIp());
             return null;
         }
 
@@ -452,8 +454,10 @@ public abstract class LoginAbstractAzkabanServlet extends
     public String getRealIp(HttpServletRequest req) {
         String remoteIp = req.getHeader("x-forwarded-for");
         if (org.apache.commons.lang.StringUtils.isBlank(remoteIp)) {
+            logger.error("There is no param x-forwarded-for in request header,then got remoteAddr");
             remoteIp = req.getRemoteAddr();
         } else {
+            logger.error("The real client request IP:" + remoteIp);
             String ips[] = remoteIp.split(",");
             remoteIp = ips[0];
         }
