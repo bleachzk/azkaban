@@ -118,6 +118,7 @@ azkaban.FlowTableView = Backbone.View.extend({
         divRunJob.flowId = flowId;
         $(hoverMenuDiv).append(divRunJob);
 
+
         var divRunWithDep = document.createElement("button");
         $(divRunWithDep).attr('type', 'button');
         $(divRunWithDep).addClass("btn");
@@ -192,12 +193,13 @@ azkaban.FlowTableView = Backbone.View.extend({
     console.log("Run Job");
     var jobId = evt.currentTarget.jobName;
     var flowId = evt.currentTarget.flowId;
-
+    var clusterGroup = $(".execute-flow").attr("clusterGroup");
     var executingData = {
       project: projectName,
       ajax: "executeFlow",
       flow: flowId,
-      job: jobId
+      job: jobId,
+      clusterGroup:clusterGroup
     };
 
     this.executeFlowDialog(executingData);
@@ -207,13 +209,14 @@ azkaban.FlowTableView = Backbone.View.extend({
     var jobId = evt.currentTarget.jobName;
     var flowId = evt.currentTarget.flowId;
     console.log("Run With Dep");
-
+    var clusterGroup = $(".execute-flow").attr("clusterGroup");
     var executingData = {
       project: projectName,
       ajax: "executeFlow",
       flow: flowId,
       job: jobId,
-      withDep: true
+      withDep: true,
+      clusterGroup:clusterGroup
     };
     this.executeFlowDialog(executingData);
   },
