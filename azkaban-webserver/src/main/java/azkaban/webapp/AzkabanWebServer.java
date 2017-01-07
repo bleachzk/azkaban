@@ -30,6 +30,7 @@ import azkaban.scheduler.ScheduleManager;
 import azkaban.scheduler.TriggerBasedScheduleLoader;
 import azkaban.server.AzkabanServer;
 import azkaban.server.ServerConstants;
+import azkaban.server.ServerWithoutTrace;
 import azkaban.server.session.SessionCache;
 import azkaban.server.session.SessionCodis;
 import azkaban.trigger.JdbcTriggerLoader;
@@ -45,7 +46,6 @@ import azkaban.webapp.plugin.TriggerPlugin;
 import azkaban.webapp.plugin.ViewerPlugin;
 import azkaban.webapp.servlet.*;
 import com.linkedin.restli.server.RestliServlet;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.jmx.HierarchyDynamicMBean;
 import org.apache.velocity.app.VelocityEngine;
@@ -669,7 +669,7 @@ public class AzkabanWebServer extends AzkabanServer {
 
     boolean ssl;
     int port;
-    final Server server = new Server();
+    final Server server = new ServerWithoutTrace();
     if (azkabanSettings.getBoolean("jetty.use.ssl", true)) {
       int sslPortNumber =
           azkabanSettings.getInt("jetty.ssl.port", DEFAULT_SSL_PORT_NUMBER);

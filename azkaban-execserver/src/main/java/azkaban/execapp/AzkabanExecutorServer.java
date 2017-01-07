@@ -16,38 +16,10 @@
 
 package azkaban.execapp;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.Constructor;
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
-
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import org.apache.log4j.Logger;
-import org.joda.time.DateTimeZone;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
-import org.mortbay.thread.QueuedThreadPool;
-
 import azkaban.execapp.event.JobCallbackManager;
 import azkaban.execapp.jmx.JmxFlowRunnerManager;
 import azkaban.execapp.jmx.JmxJobMBeanManager;
-import azkaban.execapp.metric.NumFailedFlowMetric;
-import azkaban.execapp.metric.NumFailedJobMetric;
-import azkaban.execapp.metric.NumQueuedFlowMetric;
-import azkaban.execapp.metric.NumRunningFlowMetric;
-import azkaban.execapp.metric.NumRunningJobMetric;
+import azkaban.execapp.metric.*;
 import azkaban.executor.ExecutorLoader;
 import azkaban.executor.JdbcExecutorLoader;
 import azkaban.jmx.JmxJettyServer;
@@ -59,9 +31,28 @@ import azkaban.project.JdbcProjectLoader;
 import azkaban.project.ProjectLoader;
 import azkaban.server.AzkabanServer;
 import azkaban.server.ServerConstants;
+import azkaban.server.ServerWithoutTrace;
 import azkaban.utils.Props;
 import azkaban.utils.SystemMemoryInfo;
 import azkaban.utils.Utils;
+import org.apache.log4j.Logger;
+import org.joda.time.DateTimeZone;
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.servlet.Context;
+import org.mortbay.jetty.servlet.ServletHolder;
+import org.mortbay.thread.QueuedThreadPool;
+
+import javax.management.MBeanInfo;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.io.*;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Constructor;
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TimeZone;
 
 public class AzkabanExecutorServer {
   private static final String CUSTOM_JMX_ATTRIBUTE_PROCESSOR_PROPERTY =
@@ -107,7 +98,7 @@ public class AzkabanExecutorServer {
     int portNumber = props.getInt("executor.port", DEFAULT_PORT_NUMBER);
     int maxThreads = props.getInt("executor.maxThreads", DEFAULT_THREAD_NUMBER);
 
-    server = new Server(portNumber);
+    server = new ServerWithoutTrace(portNumber);
     QueuedThreadPool httpThreadPool = new QueuedThreadPool(maxThreads);
     server.setThreadPool(httpThreadPool);
 
