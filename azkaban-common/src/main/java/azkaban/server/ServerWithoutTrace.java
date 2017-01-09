@@ -18,7 +18,7 @@ public class ServerWithoutTrace extends Server {
 
     public ServerWithoutTrace(int port)
     {
-        super();
+        super(port);
     }
 
     public void handle(HttpConnection connection) throws IOException, ServletException {
