@@ -365,7 +365,8 @@ public class TriggerManager extends EventHandler implements
         }
 
         private void onTriggerExpire(Trigger t) throws TriggerManagerException {
-            List<TriggerAction> expireActions = t.getExpireActions();
+//            List<TriggerAction> expireActions = t.getExpireActions();
+            List<TriggerAction> expireActions = t.getTriggerActions();
             for (TriggerAction action : expireActions) {
                 try {
                     logger.info("Doing expire actions");

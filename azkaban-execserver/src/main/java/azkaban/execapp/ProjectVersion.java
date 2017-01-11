@@ -65,7 +65,8 @@ public class ProjectVersion implements Comparable<ProjectVersion> {
       tempDir.mkdirs();
       ProjectFileHandler projectFileHandler = null;
       try {
-        projectFileHandler = projectLoader.getUploadedFile(projectId, version);
+        //修改从mysql获取文件的逻辑
+        projectFileHandler = projectLoader.getUploadedFilePath(projectId, version);
         if ("zip".equals(projectFileHandler.getFileType())) {
           logger.info("Downloading zip file.");
           ZipFile zip = new ZipFile(projectFileHandler.getLocalFile());

@@ -367,65 +367,58 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
     logger.info("Md5 hash created");
     // Really... I doubt we'll get a > 2gig file. So int casting it is!
     byte[] buffer = new byte[CHUCK_SIZE];
-    final String INSERT_PROJECT_FILES =
-        "INSERT INTO project_files (project_id, version, chunk, size, file) values (?,?,?,?,?)";
+    //===================================================================================================================
+    /**
+     * 2017-01-05 修改azkaban上传文件存储mysql的逻辑,上传的文件存储在服务器的共享目录
+     */
+    final String INSERT_PROJECT_FILES = "INSERT INTO project_files (project_id, version, file_path) values (?,?,?)";
+    String filePath = System.getProperty("java.io.tmpdir") + File.separator + uploader + File.separator + project.getName() + File.separator +
+            version + File.separator + filename;
 
-//    /**
-//     * modify the logic for upload project files <start>
-//     * 1.delete the exist project files record according to the project_id;
-//     * 2.insert project files record.
-//     */
-//    final String DELETE_PROJECT_FILES =
-//            "DELETE FROM project_files WHERE project_id = ?";
-//    try {
-//      logger.error("Running delete project files, project_id=" + project.getId());
-//      runner.update(connection, DELETE_PROJECT_FILES, project.getId());
-//    } catch (SQLException ex) {
-//      logger.error("Delete Project files error, project_id=" + project.getId());
-//    }
-//    /**
-//     * modify the logic for upload project files <end>
-//     */
+//    final String INSERT_PROJECT_FILES =
+//        "INSERT INTO project_files (project_id, version, chunk, size, file) values (?,?,?,?,?)";
 
     BufferedInputStream bufferedStream = null;
     int chunk = 0;
     try {
-      bufferedStream = new BufferedInputStream(new FileInputStream(localFile));
-      int size = bufferedStream.read(buffer);
-      while (size >= 0) {
-        logger.info("Read bytes for " + filename + " size:" + size);
-        byte[] buf = buffer;
-        if (size < buffer.length) {
-          buf = Arrays.copyOfRange(buffer, 0, size);
-        }
-        try {
-          logger.info("Running update for " + filename + " chunk " + chunk);
-          runner.update(connection, INSERT_PROJECT_FILES, project.getId(),
-              version, chunk, size, buf);
-          logger.info("Finished update for " + filename + " chunk " + chunk);
-        } catch (SQLException e) {
-          throw new ProjectManagerException("Error chunking", e);
-        }
-        ++chunk;
-
-        size = bufferedStream.read(buffer);
-      }
-    } catch (IOException e) {
+      runner.update(connection, INSERT_PROJECT_FILES, project.getId(), version, filePath);
+//      bufferedStream = new BufferedInputStream(new FileInputStream(localFile));
+//      int size = bufferedStream.read(buffer);
+//      while (size >= 0) {
+//        logger.info("Read bytes for " + filename + " size:" + size);
+//        byte[] buf = buffer;
+//        if (size < buffer.length) {
+//          buf = Arrays.copyOfRange(buffer, 0, size);
+//        }
+//        try {
+//          logger.info("Running update for " + filename + " chunk " + chunk);
+//          runner.update(connection, INSERT_PROJECT_FILES, project.getId(),
+//              version, chunk, size, buf);
+//          logger.info("Finished update for " + filename + " chunk " + chunk);
+//        } catch (SQLException e) {
+//          throw new ProjectManagerException("Error chunking", e);
+//        }
+//        ++chunk;
+//
+//        size = bufferedStream.read(buffer);
+//      }
+    } catch (Exception e) {
       throw new ProjectManagerException("Error chunking file " + filename);
     } finally {
-      IOUtils.closeQuietly(bufferedStream);
+      if (bufferedStream != null) {
+        IOUtils.closeQuietly(bufferedStream);
+      }
     }
+    //===================================================================================================================
 
     final String INSERT_PROJECT_VERSION =
         "INSERT INTO project_versions (project_id, version, upload_time, uploader, file_type, file_name, md5, num_chunks) values (?,?,?,?,?,?,?,?)";
 
     try {
-      runner.update(connection, INSERT_PROJECT_VERSION, project.getId(),
-          version, updateTime, uploader, filetype, filename, md5, chunk);
+      runner.update(connection, INSERT_PROJECT_VERSION, project.getId(), version, updateTime, uploader, filetype, filename, md5, chunk);
     } catch (SQLException e) {
       logger.error(e);
-      throw new ProjectManagerException("Error updating project version "
-          + project.getName(), e);
+      throw new ProjectManagerException("Error updating project version " + project.getName(), e);
     }
   }
 
@@ -1450,6 +1443,20 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
 
   }
 
+  private static class ProjectFilePathResultHandler implements ResultSetHandler<String> {
+
+    private static String SELECT_PROJECT_FILE_PATH =
+            "SELECT file_path FROM project_files WHERE project_id=? AND version=?";
+    @Override
+    public String handle(ResultSet rs) throws SQLException {
+      if (!rs.next()) {
+        return null;
+      }
+      String file_path = rs.getString("file_path");
+      return file_path;
+    }
+  }
+
   private static class ProjectVersionResultHandler implements
       ResultSetHandler<List<ProjectFileHandler>> {
     private static String SELECT_PROJECT_VERSION =
@@ -1527,6 +1534,50 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
                     e);
         }
     }
+
+  @Override
+  public ProjectFileHandler getUploadedFilePath(int projectId, int version) throws ProjectManagerException {
+    logger.info("getUploadedFilePath,projectId:" + projectId + ", version:" + version);
+    Connection connection = getConnection();
+    ProjectFileHandler handler = null;
+    QueryRunner runner = new QueryRunner();
+    ProjectVersionResultHandler pfHandler = new ProjectVersionResultHandler();
+
+    List<ProjectFileHandler> projectFiles = null;
+    try {
+      projectFiles =
+              runner.query(connection,
+                      ProjectVersionResultHandler.SELECT_PROJECT_VERSION, pfHandler,
+                      projectId, version);
+    } catch (SQLException e) {
+      logger.error(e);
+      throw new ProjectManagerException("Query for uploaded file for project id " + projectId + " failed.", e);
+    }
+    if (projectFiles == null || projectFiles.isEmpty()) {
+      return null;
+    }
+
+    ProjectFileHandler projectFileHandler = projectFiles.get(0);
+    ProjectFilePathResultHandler projectFilePathResultHandler = new ProjectFilePathResultHandler();
+    String file_path = null;
+    BufferedOutputStream projectOut = null;
+    try {
+      file_path = runner.query(connection, ProjectFilePathResultHandler.SELECT_PROJECT_FILE_PATH, projectFilePathResultHandler, projectId, version);
+      File file = File.createTempFile(projectFileHandler.getFileName(), String.valueOf(version), tempDir);
+      projectOut = new BufferedOutputStream(new FileOutputStream(file));
+      File projectFile = new File(file_path);
+      IOUtils.copy(new FileInputStream(projectFile), projectOut);
+      projectFileHandler.setLocalFile(file);
+    } catch (Exception e) {
+      logger.error(e);
+      throw new ProjectManagerException("Query for uploaded file for " + projectId + " failed.", e);
+    } finally {
+      DbUtils.closeQuietly(connection);
+      IOUtils.closeQuietly(projectOut);
+    }
+    return projectFileHandler;
+  }
+
   private static class ExecutorsResultsHandler implements
             ResultSetHandler<List<Map<String,String>>> {
 

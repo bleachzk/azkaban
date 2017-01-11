@@ -1676,6 +1676,9 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                 return;
             }
 
+            File projectStorePath = new File(System.getProperty("java.io.tmpdir"), user.getUserId() + File.separator + projectName + File.separator
+                    + (project.getVersion() + 1));
+            File projectStoreFile = new File(projectStorePath + File.separator + name);
             File tempDir = Utils.createTempDir();
             OutputStream out = null;
             try {
@@ -1684,6 +1687,22 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
                 out = new BufferedOutputStream(new FileOutputStream(archiveFile));
                 IOUtils.copy(item.getInputStream(), out);
                 out.close();
+
+                //=========================================================================================
+                /**
+                 * 新增逻辑,文件上传将文件写入到指定目录,不再将文件内容写入到db的project_files表中
+                 */
+                if (!projectStorePath.exists()) {
+                    projectStorePath.mkdirs();
+                }
+                if (projectStoreFile.exists()) {
+                    projectStoreFile.delete();
+                }
+                projectStoreFile.createNewFile();
+                OutputStream projectOut = new BufferedOutputStream(new FileOutputStream(projectStoreFile));
+                IOUtils.copy(item.getInputStream(), projectOut);
+                projectOut.close();
+                //=========================================================================================
 
                 Map<String, ValidationReport> reports =
                         projectManager.uploadProject(project, archiveFile, type, user,

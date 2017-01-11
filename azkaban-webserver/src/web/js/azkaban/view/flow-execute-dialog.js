@@ -435,6 +435,13 @@ azkaban.EditTableView = Backbone.View.extend({
       flowExecuteDialogView.getClusterInfo(value);
       return;
     }
+
+    var tableLength = document.getElementById("editTable").getElementsByTagName("tbody")[0].getElementsByTagName("tr").length;
+    for (i = 0; i < tableLength; i++) {
+      if (name == document.getElementById("editTable").getElementsByTagName("tr")[i].firstChild.innerText) {
+        return;
+      }
+    }
     var tr = document.createElement("tr");
     var tdName = document.createElement("td");
     $(tdName).addClass('property-key');

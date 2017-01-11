@@ -277,10 +277,23 @@ public interface ProjectLoader {
       throws ProjectManagerException;
 
   void updateProjectSettings(Project project) throws ProjectManagerException;
-    /**
-     * 获取所有的groupcluster
-     * @return
-     * @throws ProjectManagerException
+
+  /**
+   * 获取所有的groupcluster
+   * @return
+   * @throws ProjectManagerException
+   */
+  public List<Map<String,String>> fetchGroupCluster() throws ProjectManagerException;
+
+
+  /**
+   * 获取上传文件的路径
+   * @param projectId
+   * @param version
+   * @return
+   * @throws ProjectManagerException
      */
-    public List<Map<String,String>> fetchGroupCluster() throws ProjectManagerException;
+  public ProjectFileHandler getUploadedFilePath(int projectId, int version)
+          throws ProjectManagerException;
+
 }

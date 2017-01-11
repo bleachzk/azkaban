@@ -50,13 +50,6 @@ public class MockProjectLoader implements ProjectLoader {
   }
 
   @Override
-  public Project createNewProject(String name, String description, User creator)
-      throws ProjectManagerException {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
   public void removeProject(Project project, String user)
       throws ProjectManagerException {
     // TODO Auto-generated method stub
@@ -238,6 +231,16 @@ public class MockProjectLoader implements ProjectLoader {
   }
 
   @Override
+  public List<Map<String, String>> fetchGroupCluster() throws ProjectManagerException {
+    return null;
+  }
+
+  @Override
+  public ProjectFileHandler getUploadedFilePath(int projectId, int version) throws ProjectManagerException {
+    return null;
+  }
+
+  @Override
   public void updateFlow(Project project, int version, Flow flow)
       throws ProjectManagerException {
     // TODO Auto-generated method stub
@@ -249,4 +252,9 @@ public Project fetchProjectByName(String name) throws ProjectManagerException {
     // TODO Auto-generated method stub
     return null;
 }
+
+  @Override
+  public Project createNewProject(String name, String description, User creator, String clusterGroup) throws ProjectManagerException {
+    return null;
+  }
 }
