@@ -1678,7 +1678,9 @@ public class ProjectManagerServlet extends LoginAbstractAzkabanServlet {
 
             File projectStorePath = new File(System.getProperty("java.io.tmpdir"), user.getUserId() + File.separator + projectName + File.separator
                     + (project.getVersion() + 1));
+            logger.error("The path of project file:" + projectStorePath);
             File projectStoreFile = new File(projectStorePath + File.separator + name);
+            logger.error("The project file name:" + projectStoreFile);
             File tempDir = Utils.createTempDir();
             OutputStream out = null;
             try {

@@ -1550,7 +1550,7 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
                       ProjectVersionResultHandler.SELECT_PROJECT_VERSION, pfHandler,
                       projectId, version);
     } catch (SQLException e) {
-      logger.error(e);
+      logger.error("getUploadedFilePath error:" + e.getMessage());
       throw new ProjectManagerException("Query for uploaded file for project id " + projectId + " failed.", e);
     }
     if (projectFiles == null || projectFiles.isEmpty()) {
@@ -1561,20 +1561,30 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
     ProjectFilePathResultHandler projectFilePathResultHandler = new ProjectFilePathResultHandler();
     String file_path = null;
     BufferedOutputStream projectOut = null;
+    File file = null;
+    File projectFile = null;
     try {
       file_path = runner.query(connection, ProjectFilePathResultHandler.SELECT_PROJECT_FILE_PATH, projectFilePathResultHandler, projectId, version);
-      File file = File.createTempFile(projectFileHandler.getFileName(), String.valueOf(version), tempDir);
+      file = File.createTempFile(projectFileHandler.getFileName(), String.valueOf(version), tempDir);
       projectOut = new BufferedOutputStream(new FileOutputStream(file));
-      File projectFile = new File(file_path);
+      projectFile = new File(file_path);
       IOUtils.copy(new FileInputStream(projectFile), projectOut);
-      projectFileHandler.setLocalFile(file);
     } catch (Exception e) {
-      logger.error(e);
+      logger.error("select project file path error,projectId:" + projectId + ",version:" + version + ",errMsg:" + e.getMessage());
       throw new ProjectManagerException("Query for uploaded file for " + projectId + " failed.", e);
     } finally {
       DbUtils.closeQuietly(connection);
       IOUtils.closeQuietly(projectOut);
     }
+    byte[] md5 = MD5FileUtil.getFileMD5String(projectFile).getBytes();
+    byte[] fileMd5 = MD5FileUtil.getFileMD5String(file).getBytes();
+    if (Arrays.equals(md5, fileMd5)) {
+      logger.error("Md5 Hash is valid");
+    } else {
+      logger.error("Md5 Hash failed on retrieval of file");
+      throw new ProjectManagerException("Md5 Hash failed on retrieval of file");
+    }
+    projectFileHandler.setLocalFile(file);
     return projectFileHandler;
   }
 
